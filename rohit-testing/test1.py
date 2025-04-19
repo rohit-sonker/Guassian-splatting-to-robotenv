@@ -57,7 +57,7 @@ def load_mesh_in_pybullet(mesh_path):
 
 # Example usage
 if __name__ == "__main__":
-    gaussian_ply_path = "sugarmesh_3Dgs7000_densityestim02_sdfnorm02_level03_decim1000000.ply"
+    gaussian_ply_path = "playroom/sugarmesh_3Dgs7000_densityestim02_sdfnorm02_level03_decim1000000.ply"
     mesh_output_path = "converted_mesh.obj"
     
     # Convert the PLY to OBJ
