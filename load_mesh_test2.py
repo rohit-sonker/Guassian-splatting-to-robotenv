@@ -106,12 +106,11 @@ def load_mesh_with_rotation(mesh_path):
     print(f"Positioning mesh at {position}")
     
     # Calculate rotation quaternion for your desired rotation
-    orientation = p.getQuaternionFromEuler([-np.pi/2 + np.pi/3, -np.pi/2, np.pi/6])
+    # orientation = p.getQuaternionFromEuler([-np.pi/2 + np.pi/3, -np.pi/2, np.pi/6])
 
-    orientation_2 = create_rotation_quaternion([1, 1/3, 1/6], -125)  # Example rotation around x-axis
-    # orientation = p.multiplyQuaternions(orientation, orientation_2)
-    orientation = orientation_2
-
+    # orientation_2 = create_rotation_quaternion([1, 1/3, 1/6], -125)  # Example rotation around x-axis
+    # orientation = orientation_2
+    orientation = p.getQuaternionFromEuler([-np.pi/2, 0, 0])  # Example rotation around x-axis
     
     try:
         print("Loading mesh with direct transform approach...")
@@ -212,7 +211,8 @@ def load_mesh_with_rotation(mesh_path):
 
 # Main code
 def main():
-    mesh_path = "meshes/playroom/sugarfine_3Dgs7000_densityestim02_sdfnorm02_level03_decim1000000_normalconsistency01_gaussperface1.obj"
+    # mesh_path = "meshes/playroom/sugarfine_3Dgs7000_densityestim02_sdfnorm02_level03_decim1000000_normalconsistency01_gaussperface1.obj"
+    mesh_path = "meshes/fixed_playroom_mesh/fixed_mesh.obj"
     
     print("Loading mesh into PyBullet...")
     client, body_id = load_mesh_with_rotation(mesh_path)

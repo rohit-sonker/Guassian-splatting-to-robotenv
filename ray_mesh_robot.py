@@ -15,7 +15,7 @@ def setup_environment():
     planeId = p.loadURDF("plane.urdf")
     
     return physicsClient
-
+ra
 def create_scene(physics_client):
     """Create objects in the scene and return a list of their IDs"""
     shapes = []
