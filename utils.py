@@ -59,11 +59,11 @@ def create_robot(position=[0, 0, 0.1], orientation=[0, 0, 0]):
     
     return robot_id
 
-def visualize_ray(from_pos, to_pos, hit=False, lifetime=0.05):
+def visualize_ray(from_pos, to_pos, hit=False, lifetime=1.5):
     """Visualize a ray, with color indicating whether it hit something"""
     # Red if hit, green otherwise
-    color = [1, 0, 0, 1] if hit else [0, 1, 0, 1]
-    p.addUserDebugLine(from_pos, to_pos, color, 2, lifetime)
+    rgbcolor = [1, 0, 0] if hit else [0, 1, 0]
+    p.addUserDebugLine(from_pos, to_pos, lineColorRGB = rgbcolor,lineWidth= 5, lifeTime=lifetime)
 
 def cast_rays(robot_id, num_rays=16, ray_length=5.0):
     """Cast rays from the robot and return ray origins, endpoints, and results"""
@@ -115,14 +115,14 @@ def visualize_rays(ray_froms, ray_tos, results):
         else:
             visualize_ray(ray_froms[j], ray_tos[j], hit=False)
 
-def check_collision(position, shapes, robot_radius=0.25):
+def check_collision(position, shapes, collision_radius=1.2):
     """Check if a position would cause a collision with any shape"""
     for shape_id in shapes:
         shape_pos, _ = p.getBasePositionAndOrientation(shape_id)
         distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(position, shape_pos)]))
         
         # We use a conservative collision radius
-        collision_radius = 0.9  # Assuming obstacles are ~0.5 units plus robot radius
+        # collision_radius = 0.9  # Assuming obstacles are ~0.5 units plus robot radius
         if distance < collision_radius:
             return True
     return False
@@ -189,17 +189,20 @@ def simple_motion_planning(robot_pos, goal_pos, ray_results, num_rays, ray_lengt
         # No obstacles, go straight to goal
         return goal_angle
 
-def navigate_to_goal(start_pos, goal_pos, max_steps=1000):
+def navigate_to_goal(start_pos, goal_pos, max_steps=1000, physics_client=None, robot_id=None, mesh_body_id=None):
     """Navigate robot from start to goal using simple line-to-goal with obstacle avoidance"""
     # Setup environment
-    physics_client = setup_environment()
+    if physics_client is None:
+        physics_client = setup_environment()
     
     # Create scene and robot
-    scene_shapes = create_scene(physics_client)
-    robot_id = create_robot(start_pos)
+    # scene_shapes = create_scene(physics_client)
+    scene_shapes = [mesh_body_id]
+    if robot_id is None:
+        robot_id = create_robot(start_pos)
     
     # Navigation parameters
-    num_rays = 10
+    num_rays = 20
     ray_length = 1.0
     step_size = 0.1
     goal_threshold = 0.3
@@ -210,7 +213,14 @@ def navigate_to_goal(start_pos, goal_pos, max_steps=1000):
     
     # Visualize straight line path to goal
     p.addUserDebugLine(start_pos, goal_pos, [0, 0, 1, 0.5], 1, 0)
+
+    #run the simulation for 5 seconds to allow the robot to settle
+    for _ in range(200):
+        p.stepSimulation()
+        time.sleep(0.01)
     
+    input("Press Enter to continue to the next step...")
+
     try:
         for step in range(max_steps):
             # Get current robot position
@@ -269,15 +279,3 @@ def navigate_to_goal(start_pos, goal_pos, max_steps=1000):
         # Keep the simulation open for a while to see the final state
         time.sleep(2)
         p.disconnect()
-
-def main():
-    """Main function to run the simulation"""
-    # Define start and goal positions
-    start_pos = [-3, -3, 0.1]
-    goal_pos = [3, 3, 0.1]
-    
-    # Run navigation
-    navigate_to_goal(start_pos, goal_pos)
-
-if __name__ == "__main__":
-    main()

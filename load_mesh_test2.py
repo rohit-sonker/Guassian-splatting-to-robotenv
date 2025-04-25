@@ -4,6 +4,9 @@ import pybullet as p
 import pybullet_data
 import time
 import os
+from utils import *
+
+# from ray_mesh_robot import *
 
 def create_rotation_quaternion(axis, angle_degrees):
     """
@@ -72,6 +75,18 @@ def analyze_mesh(mesh_path):
     print(f"Mesh center: {center}")
     
     return mesh, min_bound, max_bound, center, size
+
+def create_robot(position=[0, 0, 0.1], orientation=[0, 0, 0]):
+    """Create and return a simple robot"""
+    robot_ori = p.getQuaternionFromEuler(orientation)
+    
+    # Simple robot with collision detection
+    robot_body_col = p.createCollisionShape(p.GEOM_BOX, halfExtents=[0.2, 0.1, 0.05])
+    robot_body_vis = p.createVisualShape(p.GEOM_BOX, halfExtents=[0.2, 0.1, 0.05], rgbaColor=[0.8, 0.8, 0.8, 1])
+    robot_id = p.createMultiBody(baseMass=1, baseCollisionShapeIndex=robot_body_col, 
+                                baseVisualShapeIndex=robot_body_vis, basePosition=position, baseOrientation=robot_ori)
+    
+    return robot_id
 
 def load_mesh_with_rotation(mesh_path):
     """Direct approach that loads original mesh and applies transforms in PyBullet"""
@@ -190,24 +205,30 @@ def load_mesh_with_rotation(mesh_path):
     # Add test objects if mesh loaded successfully
     if body_id is not None:
         # Add a sphere that falls from ceiling
-        sphere_id = p.createCollisionShape(p.GEOM_SPHERE, radius=0.3)
-        sphere_pos = [0, 0, max_bound[2] - floor_offset - 2]
-        p.createMultiBody(
-            baseMass=1.0,
-            baseCollisionShapeIndex=sphere_id,
-            basePosition=sphere_pos
-        )
+        # sphere_id = p.createCollisionShape(p.GEOM_SPHERE, radius=0.3)
+        # sphere_pos = [ 2, 3.1, 7.5]
+        # p.createMultiBody(
+        #     baseMass=1.0,
+        #     baseCollisionShapeIndex=sphere_id,
+        #     basePosition=sphere_pos
+        # )
         
         # Add a box that falls from ceiling
-        box_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=[0.2, 0.2, 0.2])
-        box_pos = [1, 1, max_bound[2] - floor_offset - 2]
-        p.createMultiBody(
-            baseMass=1.0,
-            baseCollisionShapeIndex=box_id,
-            basePosition=box_pos
-        )
+        # box_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=[0.2, 0.2, 0.2])
+        # box_pos = [5, 7, 7.5]
+        # p.createMultiBody(
+        #     baseMass=1.0,
+        #     baseCollisionShapeIndex=box_id,
+        #     basePosition=box_pos
+        # )
+        # Add a robot
+        print("Dropping robot...")
+        robot_pos = [4.3, 7.1, 7.5] #[4, 4, 8]
+        print(f"Robot position: {robot_pos}")
+        robot_id = create_robot(position= robot_pos, orientation=[0, 0, np.pi/2-np.pi/3])
+
     
-    return physicsClient, body_id
+    return physicsClient, body_id, robot_id
 
 # Main code
 def main():
@@ -215,23 +236,38 @@ def main():
     mesh_path = "meshes/fixed_playroom_mesh/fixed_mesh.obj"
     
     print("Loading mesh into PyBullet...")
-    client, body_id = load_mesh_with_rotation(mesh_path)
+    client, body_id, robot_id = load_mesh_with_rotation(mesh_path)
+
+
     
     if body_id is not None:
         print("Mesh loaded successfully! Running simulation...")
         
         # Set better camera view for room interior
+        print("Setting camera view...")
         p.resetDebugVisualizerCamera(
-            cameraDistance=5.0,
-            cameraYaw=45,
-            cameraPitch=-20,
-            cameraTargetPosition=[0, 0, 0]
+            cameraDistance=2.6,
+            cameraYaw=-4.44,
+            cameraPitch=-41,
+            cameraTargetPosition= [3, 5.5, 8]#[4, 4, 7.5]
         )
         
-        # Run simulation
+        # # Run simulation
         for i in range(10000):
             p.stepSimulation()
             time.sleep(1./240.)
+
+            pos, orn = p.getBasePositionAndOrientation(robot_id)
+            print(f"Step {i}: Robot position = {pos}, orientation = {orn}")
+
+        # this works --- goal_pos=[5.8, 6.3, 7.2],
+
+        # navigate_to_goal(start_pos=[4.3, 7.1, 7.2],
+        #                 goal_pos = [2.3, 5.2, 7.2], #[5.8, 8.3, 7.2],
+        #                 max_steps=1000,
+        #                 physics_client = client, 
+        #                 robot_id=robot_id, 
+        #                 mesh_body_id=body_id)
     else:
         print("Failed to load mesh!")
     
